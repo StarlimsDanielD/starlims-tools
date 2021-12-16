@@ -1,0 +1,21 @@
+:CLASS RestApiRouter;
+	:DECLARE RoutingTable;
+
+	:PROCEDURE Constructor;
+		Me:RoutingTable := LimsNetConnect("", "System.Collections.Hashtable");
+		Me:RoutingTable["v1/examples/basic"] := "API_Examples_v1.Basic";
+		Me:RoutingTable["v1/sample-management/sample-results"] := "_API_SampleManagement.SampleResults_v1";
+	:ENDPROC;
+	
+	:PROCEDURE Route;
+		:PARAMETERS routingInfo;
+		
+		:DECLARE sKey;
+		sKey := Lower(routingInfo:Version) + "/" + Lower(routingInfo:Service) + "/" + Lower(routingInfo:Entity);
+		
+		:IF Me:RoutingTable:ContainsKey(sKey);
+            :RETURN Me:RoutingTable[sKey];
+		:ELSE;
+			:RETURN Nil;
+        :ENDIF;
+    :ENDPROC;

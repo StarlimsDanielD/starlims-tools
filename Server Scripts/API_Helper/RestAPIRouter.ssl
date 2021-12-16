@@ -1,0 +1,77 @@
+:CLASS RestApiRouter;
+
+:DECLARE RoutingTable;
+
+/* region constructor;
+:PROCEDURE Constructor;
+	Me:RoutingTable := DoProc("API_Helper.RoutingHelper.GetAPIRoutingTable");
+:ENDPROC;
+/* endregion constructor;
+
+/* region Route;
+:PROCEDURE Route;
+:PARAMETERS oWebServiceInfo;
+/* object properties: Version, Service, Entity, Verb, ApiVerb;
+
+:DECLARE aAPIS, sCategoryName, sServerScriptCategoryId, sServerScriptName, aServerScript, aServerScriptCategory;
+
+	/* region current list of APIs;
+	aAPIS := Me:RoutingTable;
+	/* endregion current list of APIs;
+
+	/* region convert to hash;
+	:DECLARE htAPIs, nCounter, oElement;
+	htAPIs := LimsNetConnect("", "System.Collections.Hashtable"); 
+	
+	nCounter := 0;
+	:WHILE (nCounter+=1) <= Len(aAPIS);
+		oElement := CreateUDObject();
+		oElement:ServerScriptCategory := aAPIS[nCounter, 2];
+		oElement:ServerScript := aAPIS[nCounter, 3];
+
+		htAPIs[Upper(aAPIS[nCounter, 1])] := oElement;
+	:ENDWHILE;
+	/* endregion convert to hash;
+
+	/* prepare Logger object;
+	:DECLARE oLogger, sErrMsg;
+	oLogger := CreateUDObject("RestApi.RestApiLogger");
+
+	/* region check if API found;
+	:DECLARE oAPIMapping, sAPI;
+		
+	sAPI := oWebServiceInfo:Version + "_" + oWebServiceInfo:Service + "_" + oWebServiceInfo:Entity;
+	
+	oAPIMapping := htAPIs[Upper(sAPI)];
+	:IF Empty(oAPIMapping);
+		sErrMsg := DoProc("Enterprise_Server.Utilities.GetXfdResourceValue", {"GlobalResources.ContainerForm", {"Exception encountered: No routing script found for: "}});
+		oLogger:Error(sErrMsg[1] + Upper(sAPI));
+		:RETURN "";
+	:ENDIF;
+	/* endregion check if API found;
+	
+	/* region check if script category exists;
+	aServerScriptCategory := SQLExecute("Select CATEGORYID from LIMSSERVERSCRIPTCATEGORIES where Upper(CATNAME) = Upper(?oAPIMapping:ServerScriptCategory?)", "DICTIONARY");
+	:IF Empty(aServerScriptCategory);
+		sErrMsg := DoProc("Enterprise_Server.Utilities.GetXfdResourceValue", {"GlobalResources.ContainerForm", {"Exception encountered: Invalid server script category: "}});
+		oLogger:Error(sErrMsg[1] + oAPIMapping:ServerScriptCategory);
+		:RETURN "";
+	:ENDIF;
+	/* endregion check if script category exists;
+
+	/* region check if script exists;
+	sServerScriptCategoryId := aServerScriptCategory[1,1];
+	aServerScript := SQLExecute("Select SCRIPTNAME from LIMSSERVERSCRIPTS 
+		where Upper(CATEGORYID) = Upper(?sServerScriptCategoryId?) and Upper(SCRIPTNAME) = Upper(?oAPIMapping:ServerScript?)", "DICTIONARY");
+	:IF Empty(aServerScript);
+		sErrMsg := DoProc("Enterprise_Server.Utilities.GetXfdResourceValue", {"GlobalResources.ContainerForm", {"Exception encountered: Invalid server script name: "}});
+		oLogger:Error(sErrMsg[1] + oAPIMapping:ServerScript);
+		:RETURN "";
+	:ENDIF;
+	/* endregion check if script exists;
+
+	/* return category.script;
+	usrmes("API script to call: ", oAPIMapping:ServerScriptCategory + "." + oAPIMapping:ServerScript);
+	:RETURN oAPIMapping:ServerScriptCategory + "." + oAPIMapping:ServerScript;
+
+:ENDPROC;
