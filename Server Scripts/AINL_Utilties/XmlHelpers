@@ -1,0 +1,38 @@
+/* region PrettyPrint(xmlDocument) returns sXml : string;
+:PROCEDURE PrettyPrint;
+	:PARAMETERS xmlDocument;
+	
+	:DECLARE sw, xtw;
+	sw 	:= LimsNetConnect("", "System.IO.StringWriter");
+	xtw	:= LimsNetConnect("", "System.Xml.XmlTextWriter", {sw});
+	
+	xtw:Formatting := "Indented";
+	xmlDocument:WriteTo(xtw);
+	
+	:RETURN sw:ToString();
+:ENDPROC;
+/* endregion;
+
+/* region HasChildNodes(xmlNode : XmlNode) returns bHasChildNodes : boolean;
+:PROCEDURE HasChildNodes;
+	:PARAMETERS xmlNode;
+	
+	/* if there are child nodes, it should not be the inner text of the node;
+	:RETURN xmlNode:ChildNodes:Count > 0 .and. !(xmlNode:ChildNodes:Count == 1 .and. xmlNode:ChildNodes[0]:NodeType == "Text");
+:ENDPROC;
+/* endregion;
+
+/* region RemoveComments(xmlDocument : XmlDocument);
+:PROCEDURE RemoveComments;
+	:PARAMETERS xmlDocument;
+	
+	:DECLARE i;
+	:DECLARE comments, comment;
+	comments := xmlDocument:SelectNodes("//comment()");
+
+	:FOR i := 0 :TO comments:Count - 1;
+		comment := comments[i];
+		comment:ParentNode:RemoveChild(comment);
+	:NEXT;
+:ENDPROC;
+/* endregion;

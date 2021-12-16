@@ -1,0 +1,73 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	DDA
+Date......... : 2021-10-12
+
+/* 	udAuth
+		.AuthenticationType : string - e.g. "Basic"
+		.NetworkCredentials : System.Net.NetworkCredential
+		
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+/* region ExecSoapRequest(sUrl : string, sSoapEnvelope : string, authentication : udAuth) returns response : ud;
+:PROCEDURE ExecSoapRequest;
+	:PARAMETERS sUrl, sSoapEnvelope, authentication;
+	
+	:DECLARE xmlResponse;
+	
+	/* call the service with according to the parameters;
+	xmlResponse := DoProc("ExecRawSoapRequest", {sUrl, sSoapEnvelope, authentication});
+	
+	/* convert the response into an expando object;
+	:RETURN ExecFunction("AINL_Utilities.XmlDeserialization.XmlToObject", {xmlResponse});
+:ENDPROC;
+/* endregion;
+
+/* region ExecRawSoapRequest(sUrl : string, sSoapEnvelope : string, authentication : udAuth) returns sResponse : string;
+:PROCEDURE ExecRawSoapRequest;
+	:PARAMETERS sUrl, sSoapEnvelope, authentication;
+	:DEFAULT authentication, Nil; /*{"authenticationType" : "Basic", "networkCredentials" : System.Net.NetworkCredential};
+	
+	:DECLARE httpWebRequest, req, stream, streamReader, response, credCache;
+	:DECLARE uri;
+	:DECLARE xmlDocument;
+	:DECLARE sReponse;
+	xmlDocument     := LimsNetConnect("", "System.Xml.XmlDocument");	
+	httpWebRequest  := LimsNetConnect("", "System.Net.WebRequest");
+	credCache       := LimsNetConnect("", "System.Net.CredentialCache");
+	
+	req := httpWebRequest:Create(sUrl);
+	req:Headers:Add("SOAP:Action");
+	req:ContentType := "text/xml;charset=UTF-8";
+	req:Accept := "text/xml";
+	req:Method := "POST";
+	
+	:IF authentication != Nil;
+		uri := LimsNetConnect("", "System.Uri", {sUrl});
+		credCache:Add(uri, authentication:AuthenticationType, authentication:NetworkCredentials);
+		req:Credentials := credCache;
+	:ENDIF;
+	
+	stream := req:GetRequestStream();
+	xmlDocument:LoadXml(sSoapEnvelope);
+	xmlDocument:Save(stream);
+
+	response := req:GetResponse():GetResponseStream();	
+	streamReader := LimsNetConnect("", "System.IO.StreamReader", {response});
+	sReponse := streamReader:ReadToEnd();
+		
+	:RETURN sReponse;
+:ENDPROC;
+/* endregion;

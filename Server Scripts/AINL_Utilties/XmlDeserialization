@@ -1,0 +1,69 @@
+/* region XmlToObject(sXml : string) returns response : ud;
+:PROCEDURE XmlToObject;
+	:PARAMETERS sXml;
+	
+	:DECLARE xmlDocument;
+	xmlDocument := LimsNetConnect("", "System.Xml.XmlDocument");	
+	xmlDocument:LoadXml(sXml);
+	
+	:RETURN DoProc("XmlDocumentToObject", {xmlDocument});
+:ENDPROC;
+/* endregion;
+
+/* region XmlDocumentToObject(xmlDocument : XmlDocument) returns response : ud;
+:PROCEDURE XmlDocumentToObject;
+	:PARAMETERS xmlDocument;
+	
+	:DECLARE converted;
+	converted := DoProc("ConvertXmlNodeToObject", {xmlDocument:ChildNodes[0], xmlDocument});
+
+	:RETURN converted;
+:ENDPROC;
+/* endregion;
+
+/* region ConvertXmlNodeToObject(node : XmlNode, xmlDocument : XmlDocument) returns response : ud;;
+:PROCEDURE ConvertXmlNodeToObject;	
+	:PARAMETERS node, xmlDocument, obj;
+	:DEFAULT obj, CreateUdObject();
+	
+	:DECLARE i;
+	:DECLARE childNode, childObj;
+
+	:FOR i := 0 :TO node:ChildNodes:Count - 1;
+		childNode := node:ChildNodes[i];
+		childObj := CreateUdObject();		
+
+		:IF ExecFunction("AINL_Utilities.XmlHelpers.HasChildNodes", {childNode});
+			childObj := DoProc("ConvertXmlNodeToObject", {childNode, xmlDocument, childObj});	
+			
+			DoProc("WriteProperty", {obj, childNode:LocalName, childObj});
+		:ELSE;
+			DoProc("WriteProperty", {obj, childNode:LocalName, childNode:InnerText});
+		:ENDIF;
+	:NEXT;
+	
+	:RETURN obj;
+:ENDPROC;
+/* endregion;
+
+/* region WriteProperty(obj : ud, propName : string, propValue : ud) : void;
+:PROCEDURE WriteProperty;
+	:PARAMETERS obj, propName, propValue;
+	
+	:DECLARE childProp;
+	
+	:IF !obj:IsProperty(propName);
+		obj:SetProperty(propName, propValue);
+	:ELSE;
+		/* if the property is found multiple times, convert that property into an array;
+		childProp := obj:GetProperty(propName);
+
+		:IF LimsTypeEx(childProp) == "ARRAY";
+			AAdd(childProp, propValue);
+		:ELSE;
+			obj:SetProperty(propName, {childProp});
+			AAdd(obj:GetProperty(propName), propValue);
+		:ENDIF;
+	:ENDIF;
+:ENDPROC;
+/* endregion;

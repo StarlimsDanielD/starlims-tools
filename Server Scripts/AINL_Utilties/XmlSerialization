@@ -1,0 +1,74 @@
+Tested for use with SOAP web services. For those (many) times a wsdl is not read correctly by our runtime
+
+/* region FillXmlTemplate(sXml : string, o : ud) : void;
+:PROCEDURE FillXmlTemplate;
+	:PARAMETERS sXml, o;
+	
+	:DECLARE xmlDocument;
+	xmlDocument := LimsNetConnect("", "System.Xml.XmlDocument");
+	xmlDocument:LoadXml(sXml);
+	
+	ExecFunction("AINL_Utilities.XmlHelpers.RemoveComments", {xmlDocument});	
+	DoProc("FillXmlTemplateByNode", {xmlDocument, o});
+
+	:RETURN ExecFunction("AINL_Utilities.XmlHelpers.PrettyPrint", {xmlDocument});
+:ENDPROC;
+/* endregion;
+
+/* region FillXmlTemplateByNode(xmlNode : XmlNode, o : ud);
+:PROCEDURE FillXmlTemplateByNode;
+	:PARAMETERS xmlNode, o, bDelByProp;
+	:DEFAULT bDelByProp, .F.;
+
+	:DECLARE aProperties;
+	:DECLARE sProp;
+	:DECLARE i, j;
+	:DECLARE value, childNode, copiedNode;
+	:DECLARE bChildProcessed;
+	
+	aProperties := o:GetProperties();
+
+	:FOR i := xmlNode:ChildNodes:Count - 1 :TO 0 :STEP -1;
+		childNode := xmlNode:ChildNodes[i];
+		bChildProcessed := .F.;
+		
+		:IF o:IsProperty(childNode:LocalName);
+			value := o:GetProperty(childNode:LocalName);
+			
+			:BEGINCASE;
+				:CASE LimsTypeEx(value) == "OBJECT";
+					DoProc("FillXmlTemplateByNode", {childNode, value, .T.});
+					bChildProcessed := .T.;
+				:EXITCASE;
+				
+				:CASE LimsTypeEx(value) == "ARRAY";		
+					:FOR j := 1 :TO value:Length;
+						copiedNode := childNode:CloneNode(.T.);
+						xmlNode:AppendChild(copiedNode);
+						
+						DoProc("FillXmlTemplateByNode", {copiedNode, value[j], .T.});
+					:NEXT;
+					
+					childNode:ParentNode:RemoveChild(childNode);
+				:EXITCASE;
+				
+				:CASE LimsTypeEx(value) == "DATE";
+					childNode:InnerText := value:ToString("o");
+				:EXITCASE;
+				
+				:OTHERWISE;
+					childNode:InnerText := value:ToString();
+				
+			:ENDCASE;
+		:ELSE;
+			:IF bDelByProp;
+				childNode:ParentNode:RemoveChild(childNode);
+			:ENDIF;
+		:ENDIF;
+		
+		:IF	!bChildProcessed .and. ExecFunction("AINL_Utilities.XmlHelpers.HasChildNodes", {childNode});
+			DoProc("FillXmlTemplateByNode", {childNode, o, bDelByProp});
+		:ENDIF;
+	:NEXT;
+:ENDPROC;
+/* endregion;
