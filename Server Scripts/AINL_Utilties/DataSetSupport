@@ -1,0 +1,220 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	DDA
+Date......... : 2020-10-02
+********************************************************************************
+_______________________________________________________________________________
+Ticket....... : US #142316 - Code reviews should be timed
+Modification. : Added the queryTo... functions
+Author....... :	DDA
+Date......... :	2021-04-22
+_______________________________________________________________________________
+Ticket....... : US #150239 - User needs to configure QC specifications per Test / Analyte
+Modification. : Added bNullAsBlank to th the queryTo... functions
+Author....... :	DDA
+Date......... :	2021-05-07
+_______________________________________________________________________________
+********************************************************************************/;
+/* region SingleRowDataSetToObject(ds : DataSet) : udObject;
+/* 	udObject
+		- contains all the columns of the first row as properties in a single object;
+		
+:PROCEDURE SingleRowDataSetToObject;
+	:PARAMETERS ds;
+	
+	:DECLARE dt, row;
+	
+	dt := ds:Tables[0];
+
+	:IF dt:Rows:Count > 0;
+		row := dt:Rows[0];
+		:RETURN DoProc("DataRowToObject", {row});
+	:ELSE;
+		:RETURN Nil;
+	:ENDIF;	
+:ENDPROC;
+/* endregion;
+
+/* region DataRowToObject(row : DataRow) : udObject;
+/* 	udObject
+		- contains all the columns of the row as properties in a single object;
+		
+:PROCEDURE DataRowToObject;
+	:PARAMETERS row;
+	
+	:DECLARE o, dt;
+	:DECLARE i;
+	
+	o  := CreateUdObject();
+	dt := row:Table;
+	
+	:FOR i := 0 :TO dt:Columns:Count - 1;
+		col := dt:Columns[i];
+		
+		:IF !row:IsNull(col:ColumnName);
+			o:SetProperty(col:ColumnName, row[col:ColumnName]);
+		:ELSE;				
+			o:SetProperty(col:ColumnName, Nil);
+		:ENDIF;
+	:NEXT;
+	
+	:RETURN o;
+:ENDPROC;
+/* endregion;
+
+/* region DataSourceToDataSet(sDataSourceLocation : string, aParams : object[]) : DataSet;
+:PROCEDURE DataSourceToDataSet;
+	:PARAMETERS sDataSourceLocation, aParams;
+	
+	:DECLARE ds;
+	
+	ds := RunDs(sDataSourceLocation, aParams, "xml");
+	ds := ExecFunction("Enterprise_Server.DataSetSupport.DsFromString", {ds});
+	
+	:RETURN ds;
+:ENDPROC;
+/* endregion;
+
+/* region DataSourceToDataTable(sDataSourceLocation : string, aParams : object[]) : DataTable;
+:PROCEDURE DataSourceToDataTable;
+	:PARAMETERS sDataSourceLocation, aParams;
+	
+	:DECLARE ds;	
+	ds := DoProc("DataSourceToDataSet", {sDataSourceLocation, aParams});
+	
+	:RETURN ds:Tables[0];
+:ENDPROC;
+/* endregion;
+
+/* region DataSourceToDataView(sDataSourceLocation : string, aParams : object[]) : DataTable;
+:PROCEDURE DataSourceToDataView;
+	:PARAMETERS sDataSourceLocation, aParams;
+	
+	:DECLARE dt;	
+	dt := DoProc("DataSourceToDataTable", {sDataSourceLocation, aParams});
+	
+	:RETURN dt:DefaultView;
+:ENDPROC;
+/* endregion;
+
+/* region DataSourceToObjects(sDataSourceLocation : string, aParams : object[]) : udObject[];
+/*	udObject
+		- all row columns as properties;
+		
+:PROCEDURE DataSourceToObjects;
+	:PARAMETERS sDataSourceLocation, aParams;
+
+	:DECLARE dt;
+	dt := DoProc("DataSourceToDataTable", {sDataSourceLocation, aParams});
+	
+	:RETURN DoProc("DataTableToObjects", {dt});
+:ENDPROC;
+/* endregion;
+
+/* region QueryToDataSet(sSqlStatement : string, aParams : object[], [sConnection] : string, [sTableName] : string, [bNullAsBlank] : boolean) : DataSet;		
+:PROCEDURE QueryToDataSet;
+	:PARAMETERS sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank;
+	:DEFAULT sTableName, Nil;
+	:DEFAULT sConnection, "DATABASE";
+	
+	:DECLARE ds;
+	ds := GetDataSetEx(sSqlStatement, sConnection, aParams, .T., .T., sTableName, bNullAsBlank);
+	ds := ExecFunction("Enterprise_Server.DataSetSupport.DsFromString", {ds});
+	
+	:RETURN ds;
+:ENDPROC;
+/* endregion;
+
+/* region QueryToDataTable(sSqlStatement : string, aParams : object[], [sConnection] : string, [sTableName] : string, [bNullAsBlank] : boolean) : DataSet;		
+:PROCEDURE QueryToDataTable;
+	:PARAMETERS sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank;
+	
+	:DECLARE ds;
+	ds := DoProc("QueryToDataSet", {sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank});
+
+	:RETURN ds:Tables[0];
+:ENDPROC;
+/* endregion;
+
+/* region QueryToDataView(sSqlStatement : string, aParams : object[], [sConnection] : string, [sTableName] : string, [bNullAsBlank] : boolean) : DataSet;		
+:PROCEDURE QueryToDataView;
+	:PARAMETERS sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank;
+	
+	:DECLARE dt;
+	dt := DoProc("QueryToDataTable", {sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank});
+
+	:RETURN dt:DefaultView;
+:ENDPROC;
+/* endregion;
+
+/* region SingleRowDataSourceToObject(sDataSourceLocation : string, aParams : object[]) : udObject;
+/* 	udObject
+		- contains all the columns of the first row as properties in a single object;
+		
+:PROCEDURE SingleRowDataSourceToObject;
+	:PARAMETERS sDataSourceLocation, aParams;
+
+	:DECLARE ds, o;
+	ds := DoProc("DataSourceToDataSet", {sDataSourceLocation, aParams});
+	o  := DoProc("SingleRowDataSetToObject", {ds});
+	
+	:RETURN o;
+:ENDPROC;
+/* endregion;
+
+/* region SingleRowQueryToObject(sSqlStatement : string, aParams : object[], [sConnection] : string, [bNullAsBlank] : boolean) : udObject;
+/* 	udObject
+		- contains all the columns of the first row as properties in a single object;
+		
+:PROCEDURE SingleRowQueryToObject;
+	:PARAMETERS sSqlStatement, aParams, sConnection, bNullAsBlank;
+	:DEFAULT sConnection, "DATABASE";
+	
+	:DECLARE ds, o;
+	ds := DoProc("QueryToDataSet", {sSqlStatement, aParams, sConnection, bNullAsBlank});
+	o  := DoProc("SingleRowDataSetToObject", {ds});
+	
+	:RETURN o;
+:ENDPROC;
+/* endregion;  
+
+/* region GetNewEmptyDataTable([sTableName] : string) : DataTable;
+:PROCEDURE GetNewEmptyDataTable;
+	:PARAMETERS sTableName;
+	:DEFAULT sTableName, "Table";
+	
+	:DECLARE ds, dt;
+	
+	ds := LimsNetConnect("", "System.Data.DataSet");
+	dt := LimsNetConnect("", "System.Data.DataTable");
+	ds:DataSetName := "DataSet";
+	dt:TableName := sTableName;
+	ds:Tables:Add(dt);
+	
+	:RETURN dt;
+:ENDPROC;
+/* endregion;
+
+/* region DataTableToObjects(dt : DataTable) : udObject[];
+/*	udObject
+		- all row columns as properties;
+		
+:PROCEDURE DataTableToObjects;
+	:PARAMETERS dt;
+	
+	:DECLARE objectCollection;
+	:DECLARE i;
+	objectCollection := {};
+	
+	:FOR i := 0 :TO dt:Rows:Count - 1;
+		AAdd(objectCollection, DoProc("DataRowToObject", {dt:Rows[i]}));
+	:NEXT;
+	
+	:RETURN objectCollection;
+:ENDPROC;
+/* endregion;
