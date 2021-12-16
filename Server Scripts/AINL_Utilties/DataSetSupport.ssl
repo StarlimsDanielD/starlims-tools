@@ -9,15 +9,10 @@ Author....... :	DDA
 Date......... : 2020-10-02
 ********************************************************************************
 _______________________________________________________________________________
-Ticket....... : US #142316 - Code reviews should be timed
-Modification. : Added the queryTo... functions
-Author....... :	DDA
-Date......... :	2021-04-22
-_______________________________________________________________________________
-Ticket....... : US #150239 - User needs to configure QC specifications per Test / Analyte
-Modification. : Added bNullAsBlank to th the queryTo... functions
-Author....... :	DDA
-Date......... :	2021-05-07
+Ticket....... : 
+Modification. :
+Author....... :	
+Date......... :	
 _______________________________________________________________________________
 ********************************************************************************/;
 /* region SingleRowDataSetToObject(ds : DataSet) : udObject;
