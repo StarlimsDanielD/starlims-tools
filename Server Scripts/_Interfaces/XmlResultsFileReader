@@ -1,0 +1,20 @@
+:CLASS XmlResultsFileReader;
+:INHERIT _Interfaces.ResultsFileReader;
+
+	/* region Ctor(sFilePath : string);
+	:PROCEDURE Constructor;
+		:PARAMETERS sFilePath;
+		
+		Base:Init(sFilePath);
+	:ENDPROC;
+	/* endregion;
+		
+	/* region protected buildContentsManager() returns Nil;
+	:PROCEDURE buildContentsManager;
+		:DECLARE xmlDoc;
+		xmlDoc := LimsNetConnect("System.Xml", "System.Xml.XmlDocument");	
+		xmlDoc:Load(Me:FilePath);
+		
+		:RETURN xmlDoc;
+	:ENDPROC;
+	/* endregion;
