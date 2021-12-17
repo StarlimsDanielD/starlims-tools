@@ -13,7 +13,7 @@
 :PARAMETERS oWebServiceInfo;
 /* object properties: Version, Service, Entity, Verb, ApiVerb;
 
-:DECLARE aAPIS, sCategoryName, sServerScriptCategoryId, sServerScriptName, aServerScript, aServerScriptCategory;
+:DECLARE aAPIS, sServerScriptCategoryId, aServerScript, aServerScriptCategory;
 
 	/* region current list of APIs;
 	aAPIS := Me:RoutingTable;

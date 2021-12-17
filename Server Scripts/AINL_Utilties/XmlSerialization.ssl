@@ -1,5 +1,3 @@
-Tested for use with SOAP web services. For those (many) times a wsdl is not read correctly by our runtime
-
 /* region FillXmlTemplate(sXml : string, o : ud) : void;
 :PROCEDURE FillXmlTemplate;
 	:PARAMETERS sXml, o;
@@ -21,7 +19,6 @@ Tested for use with SOAP web services. For those (many) times a wsdl is not read
 	:DEFAULT bDelByProp, .F.;
 
 	:DECLARE aProperties;
-	:DECLARE sProp;
 	:DECLARE i, j;
 	:DECLARE value, childNode, copiedNode;
 	:DECLARE bChildProcessed;
