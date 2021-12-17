@@ -42,7 +42,7 @@ _______________________________________________________________________________
 :PROCEDURE DataRowToObject;
 	:PARAMETERS row;
 	
-	:DECLARE o, dt;
+	:DECLARE o, dt, col;
 	:DECLARE i;
 	
 	o  := CreateUdObject();
