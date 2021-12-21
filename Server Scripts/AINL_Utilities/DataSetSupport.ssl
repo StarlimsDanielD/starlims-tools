@@ -213,3 +213,28 @@ _______________________________________________________________________________
 	:RETURN objectCollection;
 :ENDPROC;
 /* endregion;
+
+/* region ReduceColumns(dt : DataTable, aColumnNames : string[]) : void;
+:PROCEDURE ReduceColumns;
+	:PARAMETERS dt, aColumnNames;
+	
+	:DECLARE i, j;
+	:DECLARE col;
+	:DECLARE bFound;
+	
+	:FOR i := dt:Columns:Count - 1 :TO 0 :STEP -1;
+		col := dt:Columns[i];
+		bFound := .F.;
+		
+		:FOR j := 1 :TO aColumnNames:Length;
+			:IF Lower(aColumnNames[j]) == Lower(col:Caption);
+				bFound := .T.;
+			:ENDIF;
+		:NEXT;
+		
+		:IF !bFound;
+			dt:Columns:Remove(col);
+		:ENDIF;
+	:NEXT;
+:ENDPROC;
+/* endregion;

@@ -1,0 +1,35 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	DDA
+Date......... : 2021-09-27
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+/* region Echo(o) > o;
+:PROCEDURE Echo;
+	:PARAMETERS o;
+	
+	:RETURN o;
+:ENDPROC;
+/* endregion;
+
+/* region EnsureProperty(o : ud, propName : string, defaultValue : object) : void;
+:PROCEDURE EnsureProperty;
+	:PARAMETERS o, propName, defaultValue;
+	
+	:IF !o:IsProperty(propName);
+		o:SetProperty(propName, defaultValue);
+	:ENDIF;
+:ENDPROC;
+/* endregion;

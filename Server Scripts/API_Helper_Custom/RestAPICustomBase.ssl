@@ -46,9 +46,9 @@
 		:DECLARE dt;
 		:DECLARE response;
 		
-		ExecFunction("API_Helper_Custom.Common.EnsureProperty", {payload, "offset", 0});
-		ExecFunction("API_Helper_Custom.Common.EnsureProperty", {payload, "limit", 100});
-		ExecFunction("API_Helper_Custom.Common.EnsureProperty", {payload, "sortBy", sDefaultOrderBy});
+		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "offset", 0});
+		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "limit", 100});
+		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "sortBy", sDefaultOrderBy});
 		
 		response := CreateUdObject();
 		response:offset := payload:offset;
@@ -77,6 +77,7 @@
 	/* endregion;
 	
 	/* region GetOrderBy(sSortBy : string) returns sOrderBy : string;
+	/* sSortBy is expected to look like 'testno.desc,method,testcode.asc';
 	:PROCEDURE GetOrderBy;
 		:PARAMETERS sSortBy;
 		
@@ -86,7 +87,6 @@
 		
 		sOrderBy := "";
 		
-		/* sSortBy is expected to look like 'testno.desc,method,testcode.asc';
 		:IF !Empty(sSortBy);
 			aSortBy := BuildArray2(sSortBy, ",", ".");
 			

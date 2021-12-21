@@ -1,0 +1,62 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	DDA
+Date......... : 2021-09-27
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+/* region EnsureFileForDownload(args : udArgs) > sPackageLocation : string;
+/*	udArgs
+		.GetFileDelegate : ud
+			.Script : string
+			.[Args] : object[]
+		.FileName : string
+		.AccessKey : string
+		.[Regenerate] : boolean;
+		
+:PROCEDURE EnsureFileForDownload;
+	:PARAMETERS args;
+	
+	:DECLARE path, file, dir;
+	:DECLARE sPackageDirectory, sPackageLocation, sGeneratedFileLocation;
+	
+	path := LimsNetConnect("", "System.IO.Path");		
+	file := LimsNetConnect("", "System.IO.File");		
+	dir  := LimsNetConnect("", "System.IO.Directory");		
+	
+	:IF !args:IsProperty("Regenerate");
+		args:Regenerate := .F.;
+	:ENDIF;
+	
+	:IF !args:GetFileDelegate:IsProperty("Args");
+		args:GetFileDelegate:Args := Nil;
+	:ENDIF;
+
+	sPackageDirectory := path:Combine(GlbDefaultTempDirectory, args:AccessKey);
+	sPackageLocation  := path:Combine(sPackageDirectory, args:FileName);
+	
+	:IF !file:Exists(sPackageLocation) .or. args:Regenerate;
+		dir:CreateDirectory(sPackageDirectory);
+		sGeneratedFileLocation := ExecFunction(args:GetFileDelegate:Script, args:GetFileDelegate:Args);
+		
+		:IF file:Exists(sPackageLocation);
+			file:Delete(sPackageLocation);
+		:ENDIF;
+		
+		file:Move(sGeneratedFileLocation, sPackageLocation);
+	:ENDIF;
+	
+	:RETURN sPackageLocation;
+:ENDPROC;
+/* endregion;
