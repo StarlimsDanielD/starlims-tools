@@ -5,10 +5,10 @@
 	:DECLARE xmlDocument;
 	xmlDocument := LimsNetConnect("", "System.Xml.XmlDocument");
 	xmlDocument:LoadXml(sXml);
-	
+		
 	ExecFunction("AINL_Utilities.XmlHelpers.RemoveComments", {xmlDocument});	
 	DoProc("FillXmlTemplateByNode", {xmlDocument, o});
-
+	
 	:RETURN ExecFunction("AINL_Utilities.XmlHelpers.PrettyPrint", {xmlDocument});
 :ENDPROC;
 /* endregion;
@@ -22,47 +22,51 @@
 	:DECLARE i, j;
 	:DECLARE value, childNode, copiedNode;
 	:DECLARE bChildProcessed;
-	
+		
 	aProperties := o:GetProperties();
-
+	
 	:FOR i := xmlNode:ChildNodes:Count - 1 :TO 0 :STEP -1;
 		childNode := xmlNode:ChildNodes[i];
 		bChildProcessed := .F.;
-		
+				
 		:IF o:IsProperty(childNode:LocalName);
 			value := o:GetProperty(childNode:LocalName);
-			
+						
 			:BEGINCASE;
 				:CASE LimsTypeEx(value) == "OBJECT";
 					DoProc("FillXmlTemplateByNode", {childNode, value, .T.});
 					bChildProcessed := .T.;
 				:EXITCASE;
-				
+							
 				:CASE LimsTypeEx(value) == "ARRAY";		
 					:FOR j := 1 :TO value:Length;
 						copiedNode := childNode:CloneNode(.T.);
 						xmlNode:AppendChild(copiedNode);
-						
+												
 						DoProc("FillXmlTemplateByNode", {copiedNode, value[j], .T.});
 					:NEXT;
-					
+										
 					childNode:ParentNode:RemoveChild(childNode);
 				:EXITCASE;
-				
+							
 				:CASE LimsTypeEx(value) == "DATE";
 					childNode:InnerText := value:ToString("o");
 				:EXITCASE;
-				
+							
 				:OTHERWISE;
-					childNode:InnerText := value:ToString();
-				
+					:IF !Empty(value);
+						childNode:InnerText := value:ToString();
+					:ELSE;
+						childNode:InnerText := "";
+					:ENDIF;
+							
 			:ENDCASE;
 		:ELSE;
 			:IF bDelByProp;
 				childNode:ParentNode:RemoveChild(childNode);
 			:ENDIF;
 		:ENDIF;
-		
+				
 		:IF	!bChildProcessed .and. ExecFunction("AINL_Utilities.XmlHelpers.HasChildNodes", {childNode});
 			DoProc("FillXmlTemplateByNode", {childNode, o, bDelByProp});
 		:ENDIF;
