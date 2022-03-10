@@ -1,0 +1,22 @@
+/* region Chunk(a : object[], nMax : int) : object[][];
+:PROCEDURE Chunk;
+	:PARAMETERS a, nMax;
+	
+	:DECLARE i;
+	:DECLARE aDivided, aMax;
+		
+	aDivided := {};
+	aMax     := {};
+	
+	:FOR i := 1 :TO a:Length;
+		AAdd (aMax, a[i]);
+				
+		:IF (aMax:Length == nMax) .or. i == a:Length;
+			AAdd(aDivided, aMax);
+			aMax := {};
+		:ENDIF;
+	:NEXT;
+		
+	:RETURN aDivided;
+:ENDPROC;
+/* endregion;
