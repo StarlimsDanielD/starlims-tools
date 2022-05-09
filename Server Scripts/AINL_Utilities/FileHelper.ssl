@@ -1,0 +1,51 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	DDA
+Date......... : 2022-05-06
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+/* region UploadFile(sClientFileName, sServerFileLocation);
+/***********************************************************************************
+Description : 
+	A small helper for lims.UploadFile(), which renames the uploaded file back to its
+	original name for further processing
+
+Parameters :
+	- sClientFileName : string
+	- sServerFileLocation : string
+				
+Returns : 
+	- sFinalPath : string
+************************************************************************************;
+:PROCEDURE UploadFile;
+	:PARAMETERS sClientFileName, sServerFileLocation;
+
+	:DECLARE path, file, dir;
+	:DECLARE sSubDir, sFinalDir, sFinalPath;
+		
+	path := LimsNetConnect("", "System.IO.Path");
+	file := LimsNetConnect("", "System.IO.File");
+	dir := LimsNetConnect("", "System.IO.Directory");
+		
+	sSubDir := CreateGuid();
+	sFinalDir := path:Combine(GlbDefaultTempDirectory, sSubDir);
+	sFinalPath := path:Combine(sFinalDir, sClientFileName);
+	
+	dir:CreateDirectory(sFinalDir);
+	file:Move(sServerFileLocation, sFinalPath);
+	
+	:RETURN sFinalPath;
+:ENDPROC;
+/* endregion;
