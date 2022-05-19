@@ -23,9 +23,9 @@ _______________________________________________________________________________
 	:PARAMETERS ds;
 	
 	:DECLARE dt, row;
-		
+			
 	dt := ds:Tables[0];
-	
+		
 	:IF dt:Rows:Count > 0;
 		row := dt:Rows[0];
 		:RETURN DoProc("DataRowToObject", {row});
@@ -44,20 +44,20 @@ _______________________________________________________________________________
 	
 	:DECLARE o, dt, col;
 	:DECLARE i;
-		
+			
 	o  := CreateUdObject();
 	dt := row:Table;
-		
+			
 	:FOR i := 0 :TO dt:Columns:Count - 1;
 		col := dt:Columns[i];
-				
+						
 		:IF !row:IsNull(col:ColumnName);
 			o:SetProperty(col:ColumnName, row[col:ColumnName]);
 		:ELSE;				
 			o:SetProperty(col:ColumnName, Nil);
 		:ENDIF;
 	:NEXT;
-		
+			
 	:RETURN o;
 :ENDPROC;
 /* endregion;
@@ -67,10 +67,10 @@ _______________________________________________________________________________
 	:PARAMETERS sDataSourceLocation, aParams;
 	
 	:DECLARE ds;
-		
+			
 	ds := RunDs(sDataSourceLocation, aParams, "xml");
 	ds := ExecFunction("Enterprise_Server.DataSetSupport.DsFromString", {ds});
-		
+			
 	:RETURN ds;
 :ENDPROC;
 /* endregion;
@@ -81,7 +81,7 @@ _______________________________________________________________________________
 	
 	:DECLARE ds;	
 	ds := DoProc("DataSourceToDataSet", {sDataSourceLocation, aParams});
-		
+			
 	:RETURN ds:Tables[0];
 :ENDPROC;
 /* endregion;
@@ -92,7 +92,7 @@ _______________________________________________________________________________
 	
 	:DECLARE dt;	
 	dt := DoProc("DataSourceToDataTable", {sDataSourceLocation, aParams});
-		
+			
 	:RETURN dt:DefaultView;
 :ENDPROC;
 /* endregion;
@@ -106,7 +106,7 @@ _______________________________________________________________________________
 
 	:DECLARE dt;
 	dt := DoProc("DataSourceToDataTable", {sDataSourceLocation, aParams});
-		
+			
 	:RETURN DoProc("DataTableToObjects", {dt});
 :ENDPROC;
 /* endregion;
@@ -120,7 +120,7 @@ _______________________________________________________________________________
 	:DECLARE ds;
 	ds := GetDataSetEx(sSqlStatement, sConnection, aParams, .T., .T., sTableName, bNullAsBlank);
 	ds := ExecFunction("Enterprise_Server.DataSetSupport.DsFromString", {ds});
-		
+			
 	:RETURN ds;
 :ENDPROC;
 /* endregion;
@@ -131,7 +131,7 @@ _______________________________________________________________________________
 	
 	:DECLARE ds;
 	ds := DoProc("QueryToDataSet", {sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank});
-	
+		
 	:RETURN ds:Tables[0];
 :ENDPROC;
 /* endregion;
@@ -142,7 +142,7 @@ _______________________________________________________________________________
 	
 	:DECLARE dt;
 	dt := DoProc("QueryToDataTable", {sSqlStatement, aParams, sConnection, sTableName});
-		
+			
 	:RETURN DoProc("DataTableToObjects", {dt});
 :ENDPROC;
 /* endregion;
@@ -153,7 +153,7 @@ _______________________________________________________________________________
 	
 	:DECLARE dt;
 	dt := DoProc("QueryToDataTable", {sSqlStatement, aParams, sConnection, sTableName, bNullAsBlank});
-	
+		
 	:RETURN dt:DefaultView;
 :ENDPROC;
 /* endregion;
@@ -168,7 +168,7 @@ _______________________________________________________________________________
 	:DECLARE ds, o;
 	ds := DoProc("DataSourceToDataSet", {sDataSourceLocation, aParams});
 	o  := DoProc("SingleRowDataSetToObject", {ds});
-		
+			
 	:RETURN o;
 :ENDPROC;
 /* endregion;
@@ -184,7 +184,7 @@ _______________________________________________________________________________
 	:DECLARE ds, o;
 	ds := DoProc("QueryToDataSet", {sSqlStatement, aParams, sConnection, bNullAsBlank});
 	o  := DoProc("SingleRowDataSetToObject", {ds});
-		
+			
 	:RETURN o;
 :ENDPROC;
 /* endregion;  
@@ -195,13 +195,13 @@ _______________________________________________________________________________
 	:DEFAULT sTableName, "Table";
 	
 	:DECLARE ds, dt;
-		
+			
 	ds := LimsNetConnect("", "System.Data.DataSet");
 	dt := LimsNetConnect("", "System.Data.DataTable");
 	ds:DataSetName := "DataSet";
 	dt:TableName := sTableName;
 	ds:Tables:Add(dt);
-		
+			
 	:RETURN dt;
 :ENDPROC;
 /* endregion;
@@ -216,11 +216,11 @@ _______________________________________________________________________________
 	:DECLARE objectCollection;
 	:DECLARE i;
 	objectCollection := {};
-		
+			
 	:FOR i := 0 :TO dt:Rows:Count - 1;
 		AAdd(objectCollection, DoProc("DataRowToObject", {dt:Rows[i]}));
 	:NEXT;
-		
+			
 	:RETURN objectCollection;
 :ENDPROC;
 /* endregion;
@@ -232,20 +232,82 @@ _______________________________________________________________________________
 	:DECLARE i, j;
 	:DECLARE col;
 	:DECLARE bFound;
-		
+			
 	:FOR i := dt:Columns:Count - 1 :TO 0 :STEP -1;
 		col := dt:Columns[i];
 		bFound := .F.;
-				
+						
 		:FOR j := 1 :TO aColumnNames:Length;
 			:IF Lower(aColumnNames[j]) == Lower(col:Caption);
 				bFound := .T.;
 			:ENDIF;
 		:NEXT;
-				
+						
 		:IF !bFound;
 			dt:Columns:Remove(col);
 		:ENDIF;
 	:NEXT;
+:ENDPROC;
+/* endregion;
+
+/* region GetDistinctDataTable(dt, aColumns);
+/***********************************************************************************
+Description : 
+	Gets a distinct dataTable from the supplied dataTable based on the columns supplied
+
+Parameters :
+	- dt : DataTable
+	- aColumns : string[] - the column names must exist in the dataTable
+				
+Returns : 
+	- dtDistinct : DataTable
+************************************************************************************;
+:PROCEDURE GetDistinctDataTable;
+	:PARAMETERS dt, aColumns;
+
+	:DECLARE ds, dv, dtDistinct;
+		
+	ds := LimsNetConnect("", "System.Data.DataSet");
+	dv := LimsNetConnect("", "System.Data.DataView", {dt});
+	dtDistinct := dv:ToTable(.T., LimsNetCast(aColumns, "System.String[]"));
+		
+	ds:Tables:Add(dtDistinct);
+	ds:DataSetName := "DataSet";
+		
+	:RETURN dtDistinct;
+:ENDPROC;
+/* endregion;
+
+/* region ExtractColumn(dt, sColumnName);
+/***********************************************************************************
+Description : 
+	Extracts a single column from a DataTable and converts that into an array
+
+Parameters :
+	- dt : DataTable
+	- sColumnName : string - the column name must exist in the dataTable
+				
+Returns : 
+	- aColumnValues : object[]
+************************************************************************************;
+:PROCEDURE ExtractColumn;
+	:PARAMETERS dt, sColumnName;
+	
+	:DECLARE dtDistinct, row;
+	:DECLARE i;
+	:DECLARE aColumnValues;
+		
+	dtDistinct := DoProc("GetDistinctDataTable", {dt, {sColumnName}});
+	aColumnValues := {};
+		
+	:FOR i := 0 :TO dtDistinct:Rows:Count - 1;
+		row := dtDistinct:Rows[i];
+				
+		:IF !row:IsNull(sColumnName);
+			AAdd(aColumnValues, row[sColumnName]);
+		:ENDIF;
+	:NEXT;
+		
+	:RETURN aColumnValues;
 :ENDPROC;
 /* endregion;
