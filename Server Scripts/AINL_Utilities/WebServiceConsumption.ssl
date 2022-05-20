@@ -26,10 +26,10 @@ _______________________________________________________________________________
 	:PARAMETERS sUrl, sSoapEnvelope, authentication;
 	
 	:DECLARE xmlResponse;
-	
+		
 	/* call the service with according to the parameters;
 	xmlResponse := DoProc("ExecRawSoapRequest", {sUrl, sSoapEnvelope, authentication});
-	
+		
 	/* convert the response into an expando object;
 	:RETURN ExecFunction("AINL_Utilities.XmlDeserialization.XmlToObject", {xmlResponse});
 :ENDPROC;
@@ -42,32 +42,44 @@ _______________________________________________________________________________
 	
 	:DECLARE httpWebRequest, req, stream, streamReader, response, credCache;
 	:DECLARE uri;
-	:DECLARE xmlDocument;
-	:DECLARE sReponse;
+	:DECLARE xmlDocument, certificate;
+	:DECLARE sReponse, sAuthType;
 	xmlDocument     := LimsNetConnect("", "System.Xml.XmlDocument");	
 	httpWebRequest  := LimsNetConnect("", "System.Net.WebRequest");
-	credCache       := LimsNetConnect("", "System.Net.CredentialCache");
-	
+	credCache       := LimsNetConnect("", "System.Net.CredentialCache");	
+		
 	req := httpWebRequest:Create(sUrl);
 	req:Headers:Add("SOAP:Action");
 	req:ContentType := "text/xml;charset=UTF-8";
 	req:Accept := "text/xml";
 	req:Method := "POST";
-	
+	req:Timeout := 60000;
+			
 	:IF authentication != Nil;
-		uri := LimsNetConnect("", "System.Uri", {sUrl});
-		credCache:Add(uri, authentication:AuthenticationType, authentication:NetworkCredentials);
-		req:Credentials := credCache;
+		sAuthType := Lower(authentication:AuthenticationType);
+				
+		:BEGINCASE;
+			:CASE sAuthType == "basic";
+				uri := LimsNetConnect("", "System.Uri", {sUrl});
+				credCache:Add(uri, authentication:AuthenticationType, authentication:NetworkCredentials);
+				req:Credentials := credCache;
+			:EXITCASE;
+					
+			:CASE sAuthType == "clientcertificate";
+				certificate := LimsNetConnect("", "System.Security.Cryptography.X509Certificates.X509Certificate2", {authentication:Certificate:FilePath, authentication:Certificate:Password});
+				req:ClientCertificates:Add(certificate);
+			:EXITCASE;			
+		:ENDCASE;
 	:ENDIF;
-	
+		
 	stream := req:GetRequestStream();
 	xmlDocument:LoadXml(sSoapEnvelope);
 	xmlDocument:Save(stream);
-
+	
 	response := req:GetResponse():GetResponseStream();	
 	streamReader := LimsNetConnect("", "System.IO.StreamReader", {response});
 	sReponse := streamReader:ReadToEnd();
-		
+			
 	:RETURN sReponse;
 :ENDPROC;
 /* endregion;
