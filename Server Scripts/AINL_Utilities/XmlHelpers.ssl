@@ -1,19 +1,39 @@
-/* region PrettyPrint(xmlDocument) returns sXml : string;
+/* region PrettyPrint(xmlDocument);
+/***********************************************************************************
+Description : 
+	Parses the xml in an XmlDocument object as a pretty printed string
+
+Parameters :
+	- xmlDocument : System.Xml.XmlDocument
+				
+Returns : 
+	- sPrettyXml : string
+************************************************************************************;
 :PROCEDURE PrettyPrint;
 	:PARAMETERS xmlDocument;
 	
 	:DECLARE sw, xtw;
 	sw 	:= LimsNetConnect("", "System.IO.StringWriter");
 	xtw	:= LimsNetConnect("", "System.Xml.XmlTextWriter", {sw});
-	
+		
 	xtw:Formatting := "Indented";
 	xmlDocument:WriteTo(xtw);
-	
+		
 	:RETURN sw:ToString();
 :ENDPROC;
 /* endregion;
 
-/* region HasChildNodes(xmlNode : XmlNode) returns bHasChildNodes : boolean;
+/* region HasChildNodes(xmlNode : XmlNode);
+/***********************************************************************************
+Description : 
+	Determines if an XmlNode has childnodes. This is done with multiple checks.
+
+Parameters :
+	- xmlNode : System.Xml.XmlNode
+				
+Returns : 
+	- bHasChildNodes : boolean
+************************************************************************************;
 :PROCEDURE HasChildNodes;
 	:PARAMETERS xmlNode;
 	
@@ -22,14 +42,23 @@
 :ENDPROC;
 /* endregion;
 
-/* region RemoveComments(xmlDocument : XmlDocument);
+/* region RemoveComments(xmlDocument);
+/***********************************************************************************
+Description : 
+	Removes all xml comments for the give XmlDocument object
+
+Parameters :
+	- xmlDocument : System.Xml.XmlDocument
+				
+Returns : -
+************************************************************************************;
 :PROCEDURE RemoveComments;
 	:PARAMETERS xmlDocument;
 	
 	:DECLARE i;
 	:DECLARE comments, comment;
 	comments := xmlDocument:SelectNodes("//comment()");
-
+	
 	:FOR i := 0 :TO comments:Count - 1;
 		comment := comments[i];
 		comment:ParentNode:RemoveChild(comment);
