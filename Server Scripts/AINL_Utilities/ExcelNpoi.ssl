@@ -1,0 +1,145 @@
+:CLASS ExcelNpoi;
+	:DECLARE WorkbookFactory;
+	:DECLARE Workbook;
+	:DECLARE CurrentWorksheet;
+	:DECLARE DateUtil;
+		
+	:PROCEDURE Constructor;	
+		Me:Init();
+	:ENDPROC;
+	
+	:PROCEDURE Init;		
+		Me:WorkbookFactory := LimsNetConnect("NPOI.OOXML.dll", "NPOI.SS.UserModel.WorkbookFactory");
+		Me:DateUtil := LimsNetConnect("NPOI.dll", "NPOI.SS.UserModel.DateUtil", {});
+			
+		Me:Workbook := Nil;
+		Me:CurrentWorksheet := Nil;
+	:ENDPROC;
+	
+	:PROCEDURE LoadFile;
+	:PARAMETERS sExcelFilePath;
+		
+		Me:Workbook := Me:WorkbookFactory:Create(sExcelFilePath);	
+		Me:CurrentWorksheet := Me:Workbook:GetSheetAt(0);
+	:ENDPROC;
+
+	:PROCEDURE SaveAs;
+	:PARAMETERS sFilePath;
+		
+		:DECLARE fMode, fAccess;
+		:DECLARE fileStream;
+			
+		fMode := LimsNetCast("Create", "enum:System.IO.FileMode");
+		fAccess := LimsNetCast("ReadWrite", "enum:System.IO.FileAccess");
+		fileStream := LimsNetConnect("", "System.IO.FileStream", {sFilePath, fMode, fAccess});
+			
+		Me:Workbook:Write(fileStream);    
+		fileStream:Dispose();
+	:ENDPROC;
+	
+	:PROCEDURE GetCellValue;
+	:PARAMETERS xlCell;
+		
+		:DECLARE value;
+			
+		:BEGINCASE;
+			:CASE xlCell:CellType == "String";
+				value := xlCell:StringCellValue;
+			:EXITCASE;
+				
+			:CASE xlCell:CellType == "Numeric";
+				:IF Me:DateUtil:IsCellDateFormatted(xlCell);
+					value := xlCell:DateCellValue;
+				:ELSE;
+					value := xlCell:NumericCellValue;
+				:ENDIF;
+			:EXITCASE;
+				
+			:OTHERWISE;
+				value := LimsString(xlCell);
+			:EXITCASE;
+		:ENDCASE;
+			
+		:RETURN value;
+	:ENDPROC;
+	
+	:PROCEDURE GetCellValueByPosition;
+	:PARAMETERS nRow, nCol;
+		
+		:DECLARE xlRow;		
+		xlRow := Me:CurrentWorksheet:GetRow(nRow);
+			
+		:RETURN Me:GetCellValueFromRow(xlRow, nCol);
+	:ENDPROC;
+	
+	:PROCEDURE GetCellValueFromRow;
+	:PARAMETERS xlRow, nCol;
+		
+		:DECLARE xlCell;		
+		xlCell := xlRow:GetCell(nCol);
+	
+		:IF !Empty(xlCell);
+			:RETURN Me:GetCellValue(xlCell);
+		:ENDIF;		
+	:ENDPROC;
+	
+	:PROCEDURE InsertColumn;
+	:PARAMETERS nInsertAt, nWidth, workSheet;
+	:DEFAULT workSheet, Me:CurrentWorksheet;
+		
+		:DECLARE i, j;
+		:DECLARE xlRow, xlCell;
+	
+		:FOR i := 0 :TO workSheet:LastRowNum - 1;
+			xlRow := workSheet:GetRow(i);
+			
+			:IF Empty(xlRow);
+				:LOOP;
+			:ENDIF;
+					
+			/* move all columns to the right of the nInsertAt;
+			:FOR j := xlRow:LastCellNum - 1 :TO nInsertAt - 1 :STEP -1;
+				xlCell := xlRow:GetCell(j);
+				xlRow:CopyCell(j, j + 1);			
+							
+				:IF !Empty(xlCell);
+					xlRow:RemoveCell(xlCell);
+				:ENDIF;
+			:NEXT;
+		:NEXT;
+			
+		:IF !Empty(nWidth);
+			workSheet:SetColumnWidth(nInsertAt, nWidth * 256);
+		:ENDIF;
+	:ENDPROC;
+	
+	:PROCEDURE GetEnsuredCell;
+	:PARAMETERS xlRow, nCellNum, xlCellStyleForNewCells;
+		
+		:DECLARE xlCell;
+		xlCell := xlRow:GetCell(nCellNum);
+			
+		:IF Empty(xlCell);
+			xlCell := xlRow:CreateCell(nCellNum);
+			xlCell:CellStyle := xlCellStyleForNewCells;
+		:ENDIF;
+	
+		:RETURN xlCell;
+	:ENDPROC;
+	
+	:PROCEDURE SetCellComment;
+	:PARAMETERS xlCell, sComment, anchor;
+	:DEFAULT anchor, LimsNetConnect("NPOI.dll", "NPOI.XSSF.UserModel.XSSFClientAnchor", {0, 0, 0, 0, 0, 3, 0, 3});
+	/* anchor - https://stackoverflow.com/questions/61925399/npoi-adding-cell-comment-to-the-left-of-a-cell;
+		
+		:DECLARE patr, rtfComment, xlComment;
+			
+		patr := Me:CurrentWorksheet:CreateDrawingPatriarch();		
+		rtfComment := LimsNetConnect("NPOI.dll", "NPOI.XSSF.UserModel.XSSFRichTextString", {sComment});
+			
+		xlComment := patr:CreateCellComment(anchor);
+		xlComment:String := rtfComment;
+		xlComment:Author := "STARLIMS";
+		xlCell:RemoveCellComment();
+		xlCell:CellComment := xlComment;
+	:ENDPROC;
