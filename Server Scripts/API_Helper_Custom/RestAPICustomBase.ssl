@@ -8,70 +8,73 @@
 	/* region Ctor();
 	:PROCEDURE Constructor;
 		UserLang := LSearch("select LANGID from USERS where USRNAM = ?", "",, {Me:UserName});	
-		Me:AccessKey := Request:Headers:Get("SL-API-Auth");
+			
+		:IF !Empty(Request) .and. LimsTypeEx(Request) == "OBJECT" .and. Request:IsProperty("Headers") .and. !Empty(Request:Headers);
+			Me:AccessKey := Request:Headers:Get("SL-API-Auth");
+		:ENDIF;
 	:ENDPROC;
 	/* endregion;
 	
 	/* region GetDownloadUrl(filePath : string) returns sUrl : string;
 	:PROCEDURE GetDownloadUrl;
-		:PARAMETERS filePath;
+	:PARAMETERS filePath;
 		
 		:DECLARE path;
 		:DECLARE protocol, host, application, fileName;
 		path := LimsNetConnect(, "System.IO.Path");
-		
+			
 		protocol    := "https"; /* this is hard-coded for now, not sure how to correctly handle this from the REST API;
 		host        := Request:ServerVariables:Get("HTTP_HOST");
 		application := Request:ApplicationPath;		
 		fileName    := path:GetFileName(filePath);
-		
+			
 		:RETURN protocol + "://" + host + application + "/rest.web.api/download/" + fileName;
 	:ENDPROC;
 	/* endregion;
 	
 	/* region GetData(sSql : string, aParams : object[], sDefaultOrderBy : string, payload : udPayload, [sConnection] : string) returns response : udResponse;
 	/*	udPayload
-			.[offset] : int
-			.[limit] : int
-			.[sortBy] : string
+	.[offset] : int
+	.[limit] : int
+	.[sortBy] : string
 			
-		udResponse
-			- all fields in the query as properties of objects inside a collection;
+	udResponse
+	- all fields in the query as properties of objects inside a collection;
 			
 	:PROCEDURE GetData;
-		:PARAMETERS sSql, aParams, sDefaultOrderBy, payload, sConnection;
-		:DEFAULT sConnection, "DATABASE";
+	:PARAMETERS sSql, aParams, sDefaultOrderBy, payload, sConnection;
+	:DEFAULT sConnection, "DATABASE";
 		
 		:DECLARE sPageSql;
 		:DECLARE dt;
 		:DECLARE response;
-		
+			
 		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "offset", 0});
 		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "limit", 100});
 		ExecFunction("AINL_Utilities.Common.EnsureProperty", {payload, "sortBy", sDefaultOrderBy});
-		
+			
 		response := CreateUdObject();
 		response:offset := payload:offset;
 		response:limit  := payload:limit;
 		response:sortBy := payload:sortBy;
-
+	
 		sPageSql := ExecFunction("Utilities.PageQuery.GetStatement");
 		sPageSql := StrTran(sPageSql, "$OriginalSQL$", sSql);
 		sPageSql := StrTran(sPageSql, "$OrderBy$", "order by " + Me:GetOrderBy(payload:sortBy));
 		sPageSql := StrTran(sPageSql, "$from$", LStr(payload:offset + 1));
 		sPageSql := StrTran(sPageSql, "$to$", LStr(payload:offset + payload:limit));
-
+	
 		dt := ExecFunction("AINL_Utilities.DataSetSupport.QueryToDataTable", {sPageSql, aParams, sConnection, "TableData", .T.});
 		dt:Columns:Remove("ROWNUM");
 		dt:Columns:Remove("ROW_NUM");		
-		
+			
 		:IF payload:IsProperty("fields");
 			ExecFunction("AINL_Utilities.DataSetSupport.ReduceColumns", {dt, BuildArray(payload:fields)});
 		:ENDIF;
-		
+			
 		response:fields := Me:GetFieldsFromData(dt);
 		response:data := ExecFunction("AINL_Utilities.DataSetSupport.DataTableToObjects", {dt});
-		
+			
 		:RETURN response;
 	:ENDPROC;
 	/* endregion;
@@ -79,50 +82,50 @@
 	/* region GetOrderBy(sSortBy : string) returns sOrderBy : string;
 	/* sSortBy is expected to look like 'testno.desc,method,testcode.asc';
 	:PROCEDURE GetOrderBy;
-		:PARAMETERS sSortBy;
+	:PARAMETERS sSortBy;
 		
 		:DECLARE aSortBy, aSortField;
 		:DECLARE sOrderBy;		
 		:DECLARE i;
-		
+			
 		sOrderBy := "";
-		
+			
 		:IF !Empty(sSortBy);
 			aSortBy := BuildArray2(sSortBy, ",", ".");
-			
+					
 			:IF aSortBy:Length > 0;
 				:FOR i := 1 :TO aSortBy:Length;
 					aSortField := aSortBy[i];				
 					sOrderBy += aSortField[1];
-					
+									
 					:IF aSortField:Length == 2;
 						sOrderBy += " " + aSortField[2];
 					:ENDIF;
-					
+									
 					sOrderBy += ",";
 				:NEXT;
-				
+							
 				sOrderBy := SubStr(sOrderBy, 0, sOrderBy:Length - 1);
 			:ENDIF;
 		:ENDIF;
-		
+			
 		:RETURN sOrderBy;
 	:ENDPROC;
 	/* endregion;
 	
 	/* region GetFieldsFromData(dt : DataTable) returns sColumnNames : string;
 	:PROCEDURE GetFieldsFromData;
-		:PARAMETERS dt;
+	:PARAMETERS dt;
 		
 		:DECLARE i;
 		:DECLARE aColumnNames;
-		
+			
 		aColumnNames := {};
-		
+			
 		:FOR i := 0 :TO dt:Columns:Count - 1;
 			AAdd(aColumnNames, dt:Columns[i]:Caption);
 		:NEXT;
-		
+			
 		:RETURN BuildString(aColumnNames,,, ", ");
 	:ENDPROC;
 	/* endregion;
